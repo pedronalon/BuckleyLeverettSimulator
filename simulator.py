@@ -3,8 +3,10 @@ import json
 import numpy as np
 import sympy as sp 
 import pandas as pd 
+import time 
 
 
+start = time.perf_counter() 
 
 with open('input.json' , 'r' ) as p:
     parameters = json.load(p)
@@ -97,8 +99,8 @@ Sw[:] = Sw0
 plot_values = [0.0,int(N/4),int(N/2),int(N*3/4),N-1]
 Sw_history = []
 So_history = []
-Sw_history.append(Sw)
-So_history.append(1-Sw)
+Sw_history.append(Sw.copy())
+So_history.append(1-Sw.copy())
 
 for i in range(N-1):
     
@@ -110,21 +112,25 @@ for i in range(N-1):
     if i == 0.0:
         continue
     elif i in plot_values:
-        Sw_history.append(Sw)
-        So_history.append(1-Sw)
+        Sw_history.append(Sw.copy())
+        So_history.append(1-Sw.copy())
 
 So = 1-Sw  
 data = {
     'x' : x , 
-    'Water Saturation' : Sw,
-    'Oil Saturation' : So,
+    'Sw' : Sw,
+    'So' : So,
 }
 
 df = pd.DataFrame(data)
+end = time.perf_counter() 
+execution_time = end - start
 
 with open('output.txt', 'w') as archive:
     archive.write('CFL: {}'.format(cfl))
     archive.write('\n')
+    archive.write('Execution time : {}'.format(execution_time))
+    archive.write(2*'\n')
     archive.write(df.to_string())
 
 
