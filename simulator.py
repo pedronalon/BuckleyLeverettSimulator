@@ -24,6 +24,7 @@ phi = parameters.get("phi")
 Sw0 = parameters.get("Sw0") 
 v = parameters.get("v")
 vp = parameters.get("vp")
+maxrrf = parameters.get("maxrrf")
 
 ti = parameters.get("ti") 
 tf = parameters.get("tf") 
@@ -50,7 +51,6 @@ def Cp_step(x,t,v_p):
     return np.where(x <= x_front, 1.0, 0.0)
 
 def rrf(Cp):
-    maxrrf = 1.0
     return 1.0 + (maxrrf-1.0)*Cp
 
 def max_fw(cp_val):
