@@ -99,10 +99,11 @@ Sw[:] = Sw0
 plot_values = [0.0,int(N/4),int(N/2),int(N*3/4),N-1]
 Sw_history = []
 So_history = []
+
 Sw_history.append(Sw.copy())
 So_history.append(1-Sw.copy())
 
-for i in range(N-1):
+for i in range(N):
     
     cp = Cp_step(x,t[i],vp)
 
