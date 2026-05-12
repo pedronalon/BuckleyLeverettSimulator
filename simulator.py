@@ -2,7 +2,8 @@
 import json 
 import numpy as np
 import sympy as sp 
-import math
+import pandas as pd 
+
 
 
 with open('input.json' , 'r' ) as p:
@@ -20,6 +21,7 @@ uo = parameters.get("uo")
 phi = parameters.get("phi") 
 Sw0 = parameters.get("Sw0") 
 v = parameters.get("v")
+vp = parameters.get("vp")
 
 ti = parameters.get("ti") 
 tf = parameters.get("tf") 
@@ -36,6 +38,8 @@ x = np.arange(Li,Lf+dx,dx)
 
 h = (v*dt)/(dx*phi)
 
+M = len(x)
+N = len(t)
 
 
 
@@ -44,11 +48,8 @@ def Cp_step(x,t,v_p):
     return np.where(x <= x_front, 1.0, 0.0)
 
 def rrf(Cp):
-    maxrrf = 10.0
+    maxrrf = 1.0
     return 1.0 + (maxrrf-1.0)*Cp
-
-cp = np.zeros(len(x))
-cp = Cp_step(x,t,1)
 
 def max_fw(cp_val):
     
@@ -68,25 +69,55 @@ def max_fw(cp_val):
 
     return maximum_value
 
-
-fw_max_polymer = max_fw(1.0)
-fw_max_w = max_fw(0.0)
-fw_max = max(fw_max_polymer,fw_max_w)
-
-cfl = (dx*phi)/(v*fw_max*dt)
-print(cfl)
-
-
 def Krw(Sw): 
     return krw0 * ((Sw - Swc) /(1 - Swc - Sor))**nw
 
 def Kro(Sw):
     return kro0 * (1 - ((Sw - Swc)/(1 - Swc - Sor)))**no 
 
-
 def fw(Sw,cp): 
     lmbd_w = Krw(Sw)/(uw*rrf(cp))
     lmbd_o = Kro(Sw)/uo 
 
     return lmbd_w/(lmbd_w + lmbd_o)
+
+
+
+
+
+fw_max_polymer = max_fw(1.0)
+fw_max_w = max_fw(0.0)
+fw_max = max(fw_max_polymer,fw_max_w)
+
+cfl = (dx*phi)/(v*fw_max*dt)
+
+Sw = np.zeros(M)
+Sw[:] = Sw0
+
+for i in range(N-1):
+    cp = Cp_step(x,t[i],vp)
+
+    Sw[1:] = Sw[1:] - (h*(fw(Sw[1:],cp[1:])-fw(Sw[:-1],cp[:-1])))
+    Sw[0] = 1 - Sw0
+
+So = 1-Sw
+  
+
+
+
+data = {
+    'x' : x , 
+    'Water Saturation' : Sw,
+    'Oil Saturation' : So,
+}
+
+df = pd.DataFrame(data)
+
+with open('output.txt', 'w') as archive:
+    archive.write('CFL: {}'.format(cfl))
+    archive.write('\n')
+    archive.write(df.to_string())
+
+
+
 
