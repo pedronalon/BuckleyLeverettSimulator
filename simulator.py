@@ -83,8 +83,27 @@ def fw(Sw,cp):
 
     return lmbd_w/(lmbd_w + lmbd_o)
 
+def upwind(Sw,h,x,t,plot_values,fw,Cp_step):
+    Sw_history = []
+    So_history = []
 
+    Sw_history.append(Sw.copy())
+    So_history.append(1-Sw.copy())
+    
+    for i in range(N):
+    
+        cp = Cp_step(x,t[i],vp)
 
+        Sw[1:] = Sw[1:] - (h*(fw(Sw[1:],cp[1:])-fw(Sw[:-1],cp[:-1])))
+        Sw[0] = 1 - Sor
+
+        if i == 0.0:
+            continue
+        elif i in plot_values:
+            Sw_history.append(Sw.copy())
+            So_history.append(1-Sw.copy())
+      
+    return Sw, Sw_history, So_history
 
 
 fw_max_polymer = max_fw(1.0)
@@ -100,23 +119,10 @@ plot_values = [0.0,int(N/4),int(N/2),int(N*3/4),N-1]
 Sw_history = []
 So_history = []
 
-Sw_history.append(Sw.copy())
-So_history.append(1-Sw.copy())
 
-for i in range(N):
-    
-    cp = Cp_step(x,t[i],vp)
+Sw, Sw_history,So_history = upwind(Sw,h,x,t,plot_values,fw,Cp_step)
+So = 1-Sw
 
-    Sw[1:] = Sw[1:] - (h*(fw(Sw[1:],cp[1:])-fw(Sw[:-1],cp[:-1])))
-    Sw[0] = 1 - Sw0
-
-    if i == 0.0:
-        continue
-    elif i in plot_values:
-        Sw_history.append(Sw.copy())
-        So_history.append(1-Sw.copy())
-
-So = 1-Sw  
 data = {
     'x' : x , 
     'Sw' : Sw,
