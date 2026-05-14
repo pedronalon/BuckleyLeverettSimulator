@@ -25,6 +25,10 @@ Sw0 = parameters.get("Sw0")
 v = parameters.get("v")
 vp = parameters.get("vp")
 maxrrf = parameters.get("maxrrf")
+fw_inj = parameters.get("fw_inj")
+
+N = parameters.get("N")
+M = parameters.get("M")
 
 ti = parameters.get("ti") 
 tf = parameters.get("tf") 
@@ -36,13 +40,18 @@ dx = parameters.get("dx")
 dt = parameters.get("dt")
 
 
-t = np.arange(ti,tf+dt,dt)
-x = np.arange(Li,Lf+dx,dx)
+t = np.linspace(ti,tf,N)
+x = np.linspace(Li,Lf,M)
+
+# t = np.arange(ti,tf+dt,dt)
+# x = np.arange(Li,Lf+dx,dx)
+
+# N = len(t)
+# M = len(x) 
 
 h = (v*dt)/(dx*phi)
 
-M = len(x)
-N = len(t)
+
 
 
 
@@ -83,9 +92,7 @@ def fw(Sw,cp):
 
     return lmbd_w/(lmbd_w + lmbd_o)
 
-def upwind(Sw,h,x,t,plot_values,fw,Cp_step):
-    Sw_history = []
-    So_history = []
+def upwind(Sw,h,x,t,N,plot_values,fw,Cp_step,fw_inj):
 
     Sw_history.append(Sw.copy())
     So_history.append(1-Sw.copy())
@@ -95,8 +102,8 @@ def upwind(Sw,h,x,t,plot_values,fw,Cp_step):
         cp = Cp_step(x,t[i],vp)
 
         Sw[1:] = Sw[1:] - (h*(fw(Sw[1:],cp[1:])-fw(Sw[:-1],cp[:-1])))
-        Sw[0] = 1 - Sor
-
+        Sw[0] = Sw[0] - h*(fw(Sw[0],cp[0]) - fw_inj) # Neumann BC 
+        
         if i == 0.0:
             continue
         elif i in plot_values:
@@ -120,7 +127,7 @@ Sw_history = []
 So_history = []
 
 
-Sw, Sw_history,So_history = upwind(Sw,h,x,t,plot_values,fw,Cp_step)
+Sw, Sw_history,So_history = upwind(Sw,h,x,t,N,plot_values,fw,Cp_step,fw_inj)
 So = 1-Sw
 
 data = {
