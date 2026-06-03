@@ -25,9 +25,9 @@ Sw0 = parameters.get("Sw0")
 v = parameters.get("v")
 vp = parameters.get("vp")
 maxrrf = parameters.get("maxrrf")
-fw_inj = parameters.get("fw_inj")
+fw_ghost = parameters.get("fw_ghost")
 
-N = parameters.get("N")
+# N = parameters.get("N")
 M = parameters.get("M")
 
 ti = parameters.get("ti") 
@@ -37,11 +37,10 @@ Li = parameters.get("Li")
 Lf = parameters.get("Lf") 
 
 dx = parameters.get("dx")
-dt = parameters.get("dt")
+cfl = parameters.get("cfl")
 
 
-t = np.linspace(ti,tf,N)
-x = np.linspace(Li,Lf,M)
+
 
 # t = np.arange(ti,tf+dt,dt)
 # x = np.arange(Li,Lf+dx,dx)
@@ -49,7 +48,7 @@ x = np.linspace(Li,Lf,M)
 # N = len(t)
 # M = len(x) 
 
-h = (v*dt)/(dx*phi)
+
 
 
 
@@ -92,59 +91,87 @@ def fw(Sw,cp):
 
     return lmbd_w/(lmbd_w + lmbd_o)
 
-def upwind(Sw,h,x,t,N,plot_values,fw,Cp_step,fw_inj):
+def upwind(Sw,h,x,t,N,plot_values,fw,Cp_step,fw_ghost,Cp_history):
 
     Sw_history.append(Sw.copy())
     So_history.append(1-Sw.copy())
     
+    
     for i in range(N):
     
         cp = Cp_step(x,t[i],vp)
+        
 
         Sw[1:] = Sw[1:] - (h*(fw(Sw[1:],cp[1:])-fw(Sw[:-1],cp[:-1])))
-        Sw[0] = Sw[0] - h*(fw(Sw[0],cp[0]) - fw_inj) # Neumann BC 
+        Sw[0] = Sw[0] - h*(fw(Sw[0],cp[0]) - fw_ghost) # Neumann BC 
         
-        if i == 0.0:
-            continue
-        elif i in plot_values:
+        if i in plot_values:
             Sw_history.append(Sw.copy())
             So_history.append(1-Sw.copy())
+            Cp_history.append(cp)
       
-    return Sw, Sw_history, So_history
+    return Sw, Sw_history, So_history, Cp_history
 
 
 fw_max_polymer = max_fw(1.0)
 fw_max_w = max_fw(0.0)
 fw_max = max(fw_max_polymer,fw_max_w)
 
-cfl = (dx*phi)/(v*fw_max*dt)
+
+dt = cfl*(dx*phi)/(v*fw_max)
+print("dt:", dt)
+N = int(tf/dt)
+
+t = np.linspace(ti,tf,N)
+x = np.linspace(Li,Lf,M)
+h = (v*dt)/(dx*phi)
 
 Sw = np.zeros(M)
 Sw[:] = Sw0
 
-plot_values = [0.0,int(N/4),int(N/2),int(N*3/4),N-1]
+plot_values = [int(N/4),int(N/2),int(N*3/4),N-1]
 Sw_history = []
 So_history = []
+Cp_history = []
 
 
-Sw, Sw_history,So_history = upwind(Sw,h,x,t,N,plot_values,fw,Cp_step,fw_inj)
+Sw, Sw_history,So_history,Cp_history = upwind(Sw,h,x,t,N,plot_values,fw,Cp_step,fw_ghost,Cp_history)
 So = 1-Sw
 
 data = {
     'x' : x , 
     'Sw' : Sw,
     'So' : So,
-}
+    'Cp' : Cp_step(x,t[N-1],vp),
+    
+    'Sw_0' : Sw_history[0],
+    'So_0' : So_history[0],
+    'Cp_0' : Cp_history[0],
+    
+    'Sw_1' : Sw_history[1],
+    'So_1' : So_history[1],
+    'Cp_1' : Cp_history[1],
+    
+    'Sw_2' : Sw_history[2],
+    'So_2' : So_history[2],
+    'Cp_2' : Cp_history[2],
+    
+    'Sw_3' : Sw_history[3],
+    'So_3' : So_history[3],
+    'Cp_3' : Cp_history[3],
+
+    
+
+}   
 
 df = pd.DataFrame(data)
-end = time.perf_counter() 
-execution_time = end - start
 
 with open('output.txt', 'w') as archive:
-    archive.write('CFL: {}'.format(cfl))
-    archive.write('\n')
-    archive.write('Execution time : {}'.format(execution_time))
-    archive.write(2*'\n')
     archive.write(df.to_string())
 
 
+end = time.perf_counter() 
+execution_time = end - start
+
+print("CFL:", cfl)
+print("Execution Time:", execution_time)
