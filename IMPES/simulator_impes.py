@@ -221,7 +221,7 @@ for i in range(N-1):
         if (p[i+1,j] > p[i+1,j+1]):
             qw[j] = fw_up[j]*Q_t
         else:
-            print(" ooo")
+            
             qw[j] = fw_up[j+1]*Q_t
 
 
