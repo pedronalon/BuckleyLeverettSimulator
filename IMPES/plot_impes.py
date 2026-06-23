@@ -1,8 +1,145 @@
-import os
-import shutil
-# from simulator import So_history, Sw_history, x, N
+
 import matplotlib.pyplot as plt
 import numpy as np
+import json 
+
+with open('input_impes.json' , 'r' ) as p:
+    parameters = json.load(p)
+
+M = parameters.get("M")
+
+
+analytical_profile = [
+[3.9880358923230403,0.7754562080629279],
+[151.5453639082752, 0.7507714892133417],
+[370.8873379860418, 0.7358322578277439],
+[512.4626121635094, 0.729803717681312],
+[508.47457627118644, 0.6718935218883229],
+[512.4626121635094, 0.5874724293377538],
+[512.4626121635094, 0.48734972995125064],
+[787.6370887337986, 0.4860980249435743],
+[1162.5124626121633, 0.48671164420847896],
+[1296.1116650049848, 0.48559890879508727],
+[1296.1116650049848, 0.4100160867091977],
+[1292.1236291126618, 0.32265803815547234],
+[1294.1176470588232, 0.250018044027427],
+[1493.5194416749748, 0.24982231220449092],
+[1619.1425722831505, 0.2487174060640167],
+[1770.6879361914255, 0.24955024497060974],
+[1896.311066799601, 0.25040852901418453],
+[1996.0119641076765, 0.24932906801069188]
+]
+
+poly_200_grid_blocks = [
+[5.982053838484546, 0.7734910605606494],
+[75.77268195413758, 0.7577170329502292],
+[207.3778664007976, 0.7428639235667233],
+[348.95314057826516, 0.7329090030521932],
+[408.7736789631106, 0.7299054982292388],
+[454.63609172482546, 0.718081338805669],
+[494.5164506480558, 0.6974286955085665],
+[506.4805583250249, 0.6885825957709695],
+[514.456630109671, 0.6709060548416103],
+[522.4327018943171, 0.6542111090042757],
+[526.42073778664, 0.6178881759629089],
+[532.4027916251246, 0.5786185003272393],
+[542.3728813559321, 0.5383633149630863],
+[548.3549351944167, 0.5079279951556375],
+[568.2951146560318, 0.4951476857770249],
+[610.1694915254237, 0.48627222626598743],
+[731.8045862412762, 0.4851712347619719],
+[809.5712861415752, 0.48705808953507584],
+[881.3559322033898, 0.48600603098679435],
+[999.0029910269192, 0.48589054921126207],
+[1098.7038883349949, 0.4867742783918185],
+[1226.3210368893317, 0.4866490100251394],
+[1258.225324027916, 0.4738569567371506],
+[1272.1834496510467, 0.4571561389451279],
+[1284.1475573280156, 0.4345677079191873],
+[1290.1296111665001, 0.4060955782957876],
+[1298.1056829511463, 0.3589711846056922],
+[1298.1056829511463, 0.31087302509648973],
+[1300.099700897308, 0.27847842974145054],
+[1308.075772681954, 0.2598202937200669],
+[1326.0219341974075, 0.25096832202778174],
+[1369.8903290129608, 0.25092526102673585],
+[1413.7587238285143, 0.2518637951177144],
+[1501.495513459621, 0.24981448293157338],
+[1661.016949152542, 0.24965789747322453],
+[1778.6640079760716, 0.2495424156976922],
+[1932.2033898305083, 0.2493917021940314],
+[1999.9999999999998, 0.24932515337423322]
+]
+
+x_analytical, y_analytical = zip(*analytical_profile)
+x_200, y_200 = zip(*poly_200_grid_blocks)
+
+for m in M:
+    d = np.loadtxt("output_impes_{}.txt".format(m-1),skiprows=1)
+
+    x = d[:,1]
+
+
+    Sw_list = [d[:,2],d[:,4],d[:,6],d[:,8],d[:,10]]
+    p_list = [d[:,3],d[:,5],d[:,7],d[:,9],d[:,11]]
+    c_list = [d[:,12],d[:,13],d[:,14],d[:,15],d[:,16]]
+
+    fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(21,7),constrained_layout=True)
+
+    manager = plt.get_current_fig_manager()
+    manager.resize(1300, 450) 
+
+    
+    for i in Sw_list:
+        axs[0].plot(x,i,label = "Sw")
+
+    axs[0].set_title("Water Saturation | M = {}".format(m-1))
+    axs[0].grid(True)
+    axs[0].set_ylim(0.0, 0.8)
+    axs[0].set_xlim(0,2000) 
+    axs[0].legend(loc='best')
+    
+
+
+    
+    for i in p_list:
+        axs[1].plot(x,i,label = "Pressure")
+
+    axs[1].set_title("Pressure | M = {}".format(m-1))
+    axs[1].grid(True)
+    axs[1].legend(loc='best')
+    
+
+
+
+    
+    for i in c_list:
+        axs[2].plot(x,i,label = "Polymer ") 
+
+    axs[2].set_title("Polymer | M = {}".format(m-1))
+    axs[2].grid(True)
+    axs[2].legend(loc='best')
+    
+
+plt.figure(figsize=(12, 8))
+
+
+for m in M:
+    d = np.loadtxt('output_impes_{}.txt'.format(m-1), skiprows=1)
+    plt.plot(d[:, 1], d[:, 10], label='M = {}'.format(m-1))   
+
+plt.plot(x_analytical, y_analytical, 'k--', label='Analytical Profile')
+plt.plot(x_200, y_200, 'k:', label='200 Grid Blocks (Sorbie)')
+plt.title('Water Saturation at N-1')
+plt.ylim(0.0, 0.8)
+plt.xlim(0, 2000)
+plt.grid(True)
+plt.legend()
+plt.show()
+
+# import json
+# import os
+# import shutil
 
 # folder = 'plots'
 
@@ -11,107 +148,7 @@ import numpy as np
 
 # os.makedirs(folder)
 
-d = np.loadtxt("output_impes.txt",skiprows=1)
-x = d[:,1]
 
-
-# sw_0 = d[:,2]
-
-
-
-Sw = d[:,10]
-
-Cp = d[:,11]
-p = d[:,12]
-
-
-
-
-# Sw_0 = d[:,5]
-# So_0 = d[:,6]
-# Cp_0 = d[:,7]
-
-# Sw_1 = d[:,8]
-# So_1 = d[:,9]
-# Cp_1 = d[:,10]
-
-# Sw_2 = d[:,11]
-# So_2 = d[:,12]
-# Cp_2 = d[:,13]
-
-
-# Sw_3 = d[:,14]
-# So_3 = d[:,15]
-# Cp_3 = d[:,16]
-
-# plt.figure(figsize=(12,8))
-# plt.plot(x,Sw_0, label = 'Sw')
-# plt.plot(x,So_0, label = 'So')
-# plt.plot(x,Cp_0, label = 'Cp')
-# plt.grid(True)
-# plt.legend()
-# plt.savefig(f'{'plots'}/graphic_t0.png', bbox_inches='tight')
-
-# plt.figure(figsize=(12,8))
-# plt.plot(x,Sw_1, label = 'Sw')
-# plt.plot(x,So_1, label = 'So')
-# plt.plot(x,Cp_1, label = 'Cp')
-# plt.grid(True)
-# plt.legend()
-# plt.savefig(f'{'plots'}/graphic_t1.png', bbox_inches='tight')
-
-
-# plt.figure(figsize=(12,8))
-# plt.plot(x,Sw_2, label = 'Sw')
-# plt.plot(x,So_2, label = 'So')
-# plt.plot(x,Cp_2, label = 'Cp')
-# plt.grid(True)
-# plt.legend()
-# plt.savefig(f'{'plots'}/graphic_t2.png', bbox_inches='tight')
-
-
-# plt.figure(figsize=(12,8))
-# plt.plot(x,Sw_3, label = 'Sw')
-# plt.plot(x,So_3, label = 'So')
-# plt.plot(x,Cp_3, label = 'Cp')
-# plt.grid(True)
-# plt.legend()
-# plt.savefig(f'{'plots'}/graphic_t3.png', bbox_inches='tight')
-
-
-plt.figure(figsize=(12,8))
-plt.plot(x,Sw, label = 'Sw')
-plt.grid(True)
-plt.legend()
-plt.show()
-
-plt.figure(figsize=(12,8))
-plt.plot(x,p, '-o', label = 'p')
-plt.grid(True)
-plt.legend()
-plt.show()
-# plt.savefig(f'{'plots'}/graphic_tf.png', bbox_inches='tight')
-
-
-
-
-
-
-
-
-
-
-
-# # n = len(Sw_history)
-# # plot_values = [0.0,int(N/4),int(N/2),int(N*3/4),N-1]
-
-# # for i in range(n):
-# #     plt.figure(figsize=(12,8))
-# #     plt.plot(x,Sw_history[i], label = 'Water Saturation')
-# #     plt.plot(x,So_history[i], label = 'Oil Saturation')
-# #     plt.title('t = {}'.format(plot_values[i]))
-# #     plt.grid(True)
-# #     plt.legend()   
 # #     plt.savefig(f'{'plots'}/graphic_t_{i}.png', bbox_inches='tight')
 
 
