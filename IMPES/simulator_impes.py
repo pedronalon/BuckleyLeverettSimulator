@@ -40,6 +40,9 @@ cfl = parameters.get("cfl")
 Csf = parameters.get("Csf")
 max_rrf = parameters.get("max_rrf")
 
+t_init = parameters.get("t_init")
+t_inj = parameters.get("t_inj")
+
 
 concentration = np.array([0.0 , 100.0 , 300.0 , 500.0])
 viscosity = np.array([0.5 , 1.5 , 4.0 , 7.8])
@@ -82,195 +85,202 @@ def r_factor(Cs):
     return np.clip(R,1.0,max_rrf)
 
 def gamma(c):
-    l = 0.01
+    l = 0.8
     Cs = l*c
     return Cs
 
 fw_values[:] = max_fw()
 fw_max_value = np.nanmax(fw_values)
+cont = 1 
 
 
-for m in M:
+for k in t_inj:
+    for m in M:
+        
+        sw_history = []
+        p_history = []
+        c_history = []
+
+        dx = (Lf-Li)/(m-1)
+        v = q/a 
+        vp = phi*a*dx
+        dt = cfl*(dx*phi)/(v*fw_max_value)
+        N = int(tf[2]/dt)
     
-    sw_history = []
-    p_history = []
-    c_history = []
+        prod = np.zeros(N)
+        Sw = np.zeros(m)
+        p = np.zeros(m)
+        C = np.zeros(m)
+        T = np.zeros(m)
+        lmbd = np.zeros(m)
+        qt = np.zeros(m-1)
+        qw = np.zeros(m-1)
+        T_inter = np.zeros(m-1)
+        T_matrix = np.zeros((m-1,m-1))
+        Cs = np.zeros(m)
+        R = np.ones(m)
 
-    dx = (Lf-Li)/(m-1)
-    v = q/a 
-    vp = phi*a*dx
-    dt = cfl*(dx*phi)/(v*fw_max_value)
-    N = int(tf/dt)
-   
-    prod = np.zeros(N)
-    Sw = np.zeros(m)
-    p = np.zeros(m)
-    C = np.zeros(m)
-    T = np.zeros(m)
-    lmbd = np.zeros(m)
-    qt = np.zeros(m-1)
-    qw = np.zeros(m-1)
-    T_inter = np.zeros(m-1)
-    T_matrix = np.zeros((m-1,m-1))
-    Cs = np.zeros(m)
-    R = np.ones(m)
-
-    t = np.linspace(ti,tf,N)
-    x = np.linspace(Li,Lf,m)
+        t = np.linspace(ti,tf[2],N)
+        x = np.linspace(Li,Lf,m)
 
 
-    Sw[:] = Swc+0.001
-    p_right = 0.0
+        Sw[:] = Swc+0.001
+        p_right = 0.0
 
-    plot_values = [int(N/4),int(N/2),int(3*N/4),N-1] 
-    sw_history.append(Sw.copy())
-    c_history.append(C.copy())
+        plot_values = [int(N/4),int(N/2),int(3*N/4),N-1] 
+        sw_history.append(Sw.copy())
+        c_history.append(C.copy())
 
-    for i in range (N-1):
+        for i in range (N-1):
 
-        lmbd_w = (k*Krw(Sw))/(linear_interpolation(concentration, viscosity, C)*R)
-        lmbd_o = (k*Kro(Sw))/ mu_o 
+            lmbd_w = (k*Krw(Sw))/(linear_interpolation(concentration, viscosity, C))
+            lmbd_o = (k*Kro(Sw))/ mu_o 
 
-        lmbd[:] = lmbd_o + lmbd_w
+            lmbd[:] = lmbd_o + lmbd_w
 
-        fw_up = lmbd_w/(lmbd_o+lmbd_w)
+            fw_up = lmbd_w/(lmbd_o+lmbd_w)
 
-        T[:] = (6.3283e-3 *lmbd[ :]*a)/dx
+            T[:] = (6.3283e-3 *lmbd[ :]*a)/dx
+            
+            main_diag = np.zeros(m-1)
+            lower_diag = np.zeros(m-2)
+            upper_diag = np.zeros(m-2)
+
+            T_right = np.zeros(m-1)
+            T_left = np.zeros(m-1)
+            
+            T_right[:] = (2 * T[:-1] * T[1:]) / (T[:-1] + T[1:])
+            T_left[1:]  = (2 * T[:-2] * T[1:-1]) / (T[:-2] + T[1:-1]) 
         
-        main_diag = np.zeros(m-1)
-        lower_diag = np.zeros(m-2)
-        upper_diag = np.zeros(m-2)
-
-        T_right = np.zeros(m-1)
-        T_left = np.zeros(m-1)
+            T_inter[:] = T_right
         
-        T_right[:] = (2 * T[:-1] * T[1:]) / (T[:-1] + T[1:])
-        T_left[1:]  = (2 * T[:-2] * T[1:-1]) / (T[:-2] + T[1:-1]) 
-    
-        T_inter[:] = T_right
-    
-        #if j == 0
-        main_diag[0] = T_right[0]
-        upper_diag[0] = -T_right[0]
-        qt[0] = q
+            #if j == 0
+            main_diag[0] = T_right[0]
+            upper_diag[0] = -T_right[0]
+            qt[0] = q
 
-        #if j == M-2 
-        main_diag[-1] = T_left[-1] + T_right[-1]
-        lower_diag[-1] = -T_left[-1]
-        qt[-1] = T_right[-1] * p_right 
+            #if j == M-2 
+            main_diag[-1] = T_left[-1] + T_right[-1]
+            lower_diag[-1] = -T_left[-1]
+            qt[-1] = T_right[-1] * p_right 
 
-        # internal points 
-        main_diag[1:-1] = T_left[1:-1] + T_right[1:-1]
-        lower_diag[:-1] = -T_left[1:-1]
-        upper_diag[1:]  = -T_right[1:-1]
-        qt[1:-1] = 0.0
+            # internal points 
+            main_diag[1:-1] = T_left[1:-1] + T_right[1:-1]
+            lower_diag[:-1] = -T_left[1:-1]
+            upper_diag[1:]  = -T_right[1:-1]
+            qt[1:-1] = 0.0
 
-        T_matrix = diags([lower_diag, main_diag , upper_diag], [-1, 0, 1]).toarray()
-        p[:-1] = np.linalg.solve(T_matrix,qt[:]) 
-        p[-1] = p_right
-    
-        Q_t = -T_inter[:]*(p[1:] - p[:-1])
+            T_matrix = diags([lower_diag, main_diag , upper_diag], [-1, 0, 1]).toarray()
+            p[:-1] = np.linalg.solve(T_matrix,qt[:]) 
+            p[-1] = p_right
         
-        
-        qw[:] = fw_up[:-1] * Q_t
-        
-        Sw_old = Sw.copy()
-        
-        Sw[0] = Sw[0] + (dt / vp) * (q - qw[0])
-        Sw[1:m-1] = Sw[1:m-1] + (dt / vp) * (qw[:-1] - qw[1:])
+            Q_t = -T_inter[:]*(p[1:] - p[:-1])
+            
+            
+            qw[:] = fw_up[:-1] * Q_t
+            
+            Sw_old = Sw.copy()
+            
+            Sw[0] = Sw[0] + (dt / vp) * (q - qw[0])
+            Sw[1:m-1] = Sw[1:m-1] + (dt / vp) * (qw[:-1] - qw[1:])
+            Sw[-1] = Sw_old[-1]
 
-        alpha = (qw*dt)/(vp)
-        alpha_inj = (q*dt)/(vp)
+            alpha = (qw*dt)/(vp)
+            alpha_inj = (q*dt)/(vp)
 
-        if t[i]>= 0.0 and t[i] < 50.00:
-            polymer_injection = Csf
-        else:
-            polymer_injection = 0.0
+            if t[i]>= t_init and t[i] < k:
+                polymer_injection = 500.00
+            else:
+                polymer_injection = 0.0
+            
+                
+
+            C[-1] = (Sw_old[-1]*C[-1] + alpha[-1]*C[-2])/Sw[-1]
+            C[1:-1] = ((Sw_old[1:-1] - alpha[1:]) * C[1:-1] + alpha[:-1] * C[:-2]) / Sw[1:-1]
+            C[0] = ((Sw_old[0] - alpha[0]) * C[0] + alpha_inj * polymer_injection) / Sw[0]
+
+            # Cs[:] = gamma(C)
+            # R[:] = r_factor(Cs)
+            # # print(R)
+            
+            np.clip(Sw, Swc, 1.0 - Sor, out = Sw)
+
+
+            if(np.isnan(Sw).any()):
+                break
+
+            if i == 0:
+                p_history.append(p.copy())
+                
+
+            if i+1 in plot_values:
+                sw_history.append(Sw.copy())  
+                p_history.append(p.copy())
+                c_history.append(C.copy())
+            
+            if m == M[-1]:
+                prod[i] = Q_t[-1] - qw[-1]
+            
         
+        if m == M[-1]:
+            prod_o = np.cumsum(prod)*dt
+
+            data_2 = {
+            't' : t , 
+            'Prod' : prod_o
+            } 
+            df_2 = pd.DataFrame(data_2)
+            with open('output_prod_{}.txt'.format(cont), 'w') as archive:
+                print(cont)
+                cont+=1
+                archive.write(df_2.to_string())
+                
+
+        data = {
+            'x' : x , 
+            
+            'Sw_0 ' : sw_history[0],
+            'p_0 ' : p_history[0],
+            
+            
+            'Sw_1 ' : sw_history[1],
+            'p_1 ' : p_history[1],
+            
+            
+            'Sw_2 ' : sw_history[2],
+            'p_2 ' : p_history[2],
+            
+            
+            'Sw_3 ' : sw_history[3],
+            'p_3 ' : p_history[3],
             
 
-        C[-1] = (Sw_old[-1]*C[-1] + alpha[-1]*C[-2])/Sw[-1]
-        C[1:-1] = ((Sw_old[1:-1] - alpha[1:]) * C[1:-1] + alpha[:-1] * C[:-2]) / Sw[1:-1]
-        C[0] = ((Sw_old[0] - alpha[0]) * C[0] + alpha_inj * polymer_injection) / Sw[0]
-
-        Cs[:] = gamma(C)
-        R[:] = r_factor(Cs)
-        
-        np.clip(Sw, Swc, 1.0 - Sor, out = Sw)
-
-
-        if(np.isnan(Sw).any()):
-            break
-
-        if i == 0:
-            p_history.append(p.copy())
+            'Sw_4 ' : sw_history[4],
+            'p_4 ' : p_history[4],
             
+            'C_0 ' : c_history[0],
+            'C_1 ' : c_history[1],
+            'C_2 ' : c_history[2],
+            'C_3 ' : c_history[3],
+            'C_4 ' : c_history[4],
+        }  
 
-        if i+1 in plot_values:
-            sw_history.append(Sw.copy())  
-            p_history.append(p.copy())
-            c_history.append(C.copy())
-        
-        if m == M[3]:
-            prod[i] = Q_t[-1] - qw[-1]
-        
 
-    if m == M[3]:
-        prod_o = np.cumsum(prod)*dt
 
-        data_2 = {
-        't' : t , 
-        'Prod' : prod_o
-        } 
-        df_2 = pd.DataFrame(data_2)
-        with open('output_prod.txt', 'w') as archive:
-            archive.write(df_2.to_string())
 
-    data = {
-        'x' : x , 
-        
-        'Sw_0 ' : sw_history[0],
-        'p_0 ' : p_history[0],
-        
-        
-        'Sw_1 ' : sw_history[1],
-        'p_1 ' : p_history[1],
-        
-        
-        'Sw_2 ' : sw_history[2],
-        'p_2 ' : p_history[2],
-        
-        
-        'Sw_3 ' : sw_history[3],
-        'p_3 ' : p_history[3],
+        df = pd.DataFrame(data)
         
 
-        'Sw_4 ' : sw_history[4],
-        'p_4 ' : p_history[4],
-        
-        'C_0 ' : c_history[0],
-        'C_1 ' : c_history[1],
-        'C_2 ' : c_history[2],
-        'C_3 ' : c_history[3],
-        'C_4 ' : c_history[4],
-    }  
+        with open('output_impes_{}.txt'.format(m-1), 'w') as archive:
+            archive.write(df.to_string())
 
 
-
-
-    df = pd.DataFrame(data)
-    
-
-    with open('output_impes_{}.txt'.format(m-1), 'w') as archive:
-        archive.write(df.to_string())
-
-
-    end = time.perf_counter() 
-    execution_time = end - start
-    print("=============================================")
-    print("M:", m-1)
-    print("dt:", dt)
-    print("N: ", N)
-    print("CFL:", cfl)
-    print("Execution Time:", execution_time)
-    print("=============================================")
+        end = time.perf_counter() 
+        execution_time = end - start
+        print("=============================================")
+        print("M:", m-1)
+        print("dt:", dt)
+        print("N: ", N)
+        print("CFL:", cfl)
+        print("Execution Time:", execution_time)
+        print("=============================================")

@@ -153,18 +153,6 @@ plt.grid(True)
 plt.legend()
 plt.show()
 
-
-o = np.loadtxt("output_prod.txt",skiprows=1)
-t = o[:,1]
-prod = o[:,2]
-
-plt.figure(figsize=(12,8))
-plt.plot(t,prod,label = "Oil production")
-plt.title("Oil accumulated Production with 50 days of polymer injection | tf = 400")
-plt.grid(True)
-plt.legend()
-plt.show()
-
 # import json
 # import os
 # import shutil
