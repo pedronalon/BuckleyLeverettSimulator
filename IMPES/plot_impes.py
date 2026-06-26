@@ -74,52 +74,68 @@ poly_200_grid_blocks = [
 x_analytical, y_analytical = zip(*analytical_profile)
 x_200, y_200 = zip(*poly_200_grid_blocks)
 
-for m in M:
-    d = np.loadtxt("output_impes_{}.txt".format(m-1),skiprows=1)
+d = np.loadtxt("output_impes_{}.txt".format(400),skiprows=1)
 
-    x = d[:,1]
+x = d[:,1]
 
+Sw_list = [d[:,2],d[:,4],d[:,6],d[:,8],d[:,10]]
+p_list = [d[:,3],d[:,5],d[:,7],d[:,9],d[:,11]]
+c_list = [d[:,12],d[:,13],d[:,14],d[:,15],d[:,16]]
 
-    Sw_list = [d[:,2],d[:,4],d[:,6],d[:,8],d[:,10]]
-    p_list = [d[:,3],d[:,5],d[:,7],d[:,9],d[:,11]]
-    c_list = [d[:,12],d[:,13],d[:,14],d[:,15],d[:,16]]
+# for m in M:
 
-    fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(21,7),constrained_layout=True)
+#     fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(21,7),constrained_layout=True)
 
-    manager = plt.get_current_fig_manager()
-    manager.resize(1300, 450) 
-
-    
-    for i in Sw_list:
-        axs[0].plot(x,i,label = "Sw")
-
-    axs[0].set_title("Water Saturation | M = {}".format(m-1))
-    axs[0].grid(True)
-    axs[0].set_ylim(0.0, 0.8)
-    axs[0].set_xlim(0,2000) 
-    axs[0].legend(loc='best')
-    
+#     manager = plt.get_current_fig_manager()
+#     manager.resize(1300, 450) 
 
 
-    
-    for i in p_list:
-        axs[1].plot(x,i,label = "Pressure")
+#     for i in Sw_list:
+#         axs[0].plot(x,i,label = "Sw")
 
-    axs[1].set_title("Pressure | M = {}".format(m-1))
-    axs[1].grid(True)
-    axs[1].legend(loc='best')
-    
+#     axs[0].set_title("Water Saturation | M = {}".format(m-1))
+#     axs[0].grid(True)
+#     axs[0].set_ylim(0.0, 0.8)
+#     axs[0].set_xlim(0,2000) 
+#     axs[0].legend(loc='best')
 
 
 
     
-    for i in c_list:
-        axs[2].plot(x,i,label = "Polymer ") 
+    # for i in p_list:
+    #     axs[1].plot(x,i,label = "Pressure")
 
-    axs[2].set_title("Polymer | M = {}".format(m-1))
-    axs[2].grid(True)
-    axs[2].legend(loc='best')
+    # axs[1].set_title("Pressure | M = {}".format(m-1))
+    # axs[1].grid(True)
+    # axs[1].legend(loc='best')
     
+
+
+
+    
+# for i in c_list:
+#         axs[2].plot(x,i,label = "Polymer ") 
+
+#     axs[2].set_title("Polymer | M = {}".format(m-1))
+#     axs[2].grid(True)
+#     axs[2].legend(loc='best')
+
+plt.figure(figsize=(12,8))
+plt.plot(x,Sw_list[4], label = "Sw")
+plt.title("Water Saturation with 50 days of polymer injection | tf = 400")
+plt.legend()
+plt.grid(True)
+plt.show() 
+
+
+plt.figure(figsize=(12,8))
+for i in c_list:
+    plt.plot(x,i, label = "Cp")
+
+plt.title("Polymer concentration variation with 50 days of polymer injection | tf = 400")
+plt.legend()
+plt.grid(True)
+plt.show() 
 
 plt.figure(figsize=(12, 8))
 
@@ -133,6 +149,18 @@ plt.plot(x_200, y_200, 'k:', label='200 Grid Blocks (Sorbie)')
 plt.title('Water Saturation at N-1')
 plt.ylim(0.0, 0.8)
 plt.xlim(0, 2000)
+plt.grid(True)
+plt.legend()
+plt.show()
+
+
+o = np.loadtxt("output_prod.txt",skiprows=1)
+t = o[:,1]
+prod = o[:,2]
+
+plt.figure(figsize=(12,8))
+plt.plot(t,prod,label = "Oil production")
+plt.title("Oil accumulated Production with 50 days of polymer injection | tf = 400")
 plt.grid(True)
 plt.legend()
 plt.show()

@@ -90,7 +90,6 @@ fw_values[:] = max_fw()
 fw_max_value = np.nanmax(fw_values)
 
 
-
 for m in M:
     
     sw_history = []
@@ -102,7 +101,8 @@ for m in M:
     vp = phi*a*dx
     dt = cfl*(dx*phi)/(v*fw_max_value)
     N = int(tf/dt)
-
+   
+    prod = np.zeros(N)
     Sw = np.zeros(m)
     p = np.zeros(m)
     C = np.zeros(m)
@@ -123,8 +123,8 @@ for m in M:
     p_right = 0.0
 
     plot_values = [int(N/4),int(N/2),int(3*N/4),N-1] 
-    c_history.append(C.copy())
     sw_history.append(Sw.copy())
+    c_history.append(C.copy())
 
     for i in range (N-1):
 
@@ -171,6 +171,7 @@ for m in M:
     
         Q_t = -T_inter[:]*(p[1:] - p[:-1])
         
+        
         qw[:] = fw_up[:-1] * Q_t
         
         Sw_old = Sw.copy()
@@ -181,9 +182,16 @@ for m in M:
         alpha = (qw*dt)/(vp)
         alpha_inj = (q*dt)/(vp)
 
+        if t[i]>= 0.0 and t[i] < 50.00:
+            polymer_injection = Csf
+        else:
+            polymer_injection = 0.0
+        
+            
+
         C[-1] = (Sw_old[-1]*C[-1] + alpha[-1]*C[-2])/Sw[-1]
         C[1:-1] = ((Sw_old[1:-1] - alpha[1:]) * C[1:-1] + alpha[:-1] * C[:-2]) / Sw[1:-1]
-        C[0] = ((Sw_old[0] - alpha[0]) * C[0] + alpha_inj * Csf) / Sw[0]
+        C[0] = ((Sw_old[0] - alpha[0]) * C[0] + alpha_inj * polymer_injection) / Sw[0]
 
         Cs[:] = gamma(C)
         R[:] = r_factor(Cs)
@@ -196,11 +204,27 @@ for m in M:
 
         if i == 0:
             p_history.append(p.copy())
+            
 
         if i+1 in plot_values:
             sw_history.append(Sw.copy())  
             p_history.append(p.copy())
             c_history.append(C.copy())
+        
+        if m == M[3]:
+            prod[i] = Q_t[-1] - qw[-1]
+        
+
+    if m == M[3]:
+        prod_o = np.cumsum(prod)*dt
+
+        data_2 = {
+        't' : t , 
+        'Prod' : prod_o
+        } 
+        df_2 = pd.DataFrame(data_2)
+        with open('output_prod.txt', 'w') as archive:
+            archive.write(df_2.to_string())
 
     data = {
         'x' : x , 
@@ -229,14 +253,17 @@ for m in M:
         'C_2 ' : c_history[2],
         'C_3 ' : c_history[3],
         'C_4 ' : c_history[4],
-    }   
+    }  
+
+
 
 
     df = pd.DataFrame(data)
+    
 
     with open('output_impes_{}.txt'.format(m-1), 'w') as archive:
         archive.write(df.to_string())
-        
+
 
     end = time.perf_counter() 
     execution_time = end - start
