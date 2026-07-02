@@ -201,7 +201,7 @@ for k in t_inj:
 
             # Cs[:] = gamma(C)
             # R[:] = r_factor(Cs)
-            # # print(R)
+            # print(R)
             
             np.clip(Sw, Swc, 1.0 - Sor, out = Sw)
 

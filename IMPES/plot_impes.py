@@ -122,7 +122,7 @@ c_list = [d[:,12],d[:,13],d[:,14],d[:,15],d[:,16]]
 
 plt.figure(figsize=(12,8))
 plt.plot(x,Sw_list[4], label = "Sw")
-plt.title("Water Saturation with 50 days of polymer injection | tf = 400")
+plt.title("Water Saturation with")
 plt.legend()
 plt.grid(True)
 plt.show() 
@@ -132,7 +132,7 @@ plt.figure(figsize=(12,8))
 for i in c_list:
     plt.plot(x,i, label = "Cp")
 
-plt.title("Polymer concentration variation with 50 days of polymer injection | tf = 400")
+plt.title("Polymer concentration variation")
 plt.legend()
 plt.grid(True)
 plt.show() 
