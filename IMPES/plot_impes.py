@@ -74,13 +74,13 @@ poly_200_grid_blocks = [
 x_analytical, y_analytical = zip(*analytical_profile)
 x_200, y_200 = zip(*poly_200_grid_blocks)
 
-d = np.loadtxt("output_impes_{}.txt".format(400),skiprows=1)
+d = np.loadtxt("output_impes_{}.txt".format(200),skiprows=1)
 
 x = d[:,1]
 
 Sw_list = [d[:,2],d[:,4],d[:,6],d[:,8],d[:,10]]
 p_list = [d[:,3],d[:,5],d[:,7],d[:,9],d[:,11]]
-c_list = [d[:,12],d[:,13],d[:,14],d[:,15],d[:,16]]
+c_list = [d[:,12],d[:,13],d[:,14],d[:,15]]
 
 # for m in M:
 
@@ -122,7 +122,7 @@ c_list = [d[:,12],d[:,13],d[:,14],d[:,15],d[:,16]]
 
 plt.figure(figsize=(12,8))
 plt.plot(x,Sw_list[4], label = "Sw")
-plt.title("Water Saturation with")
+plt.title("Water Saturation")
 plt.legend()
 plt.grid(True)
 plt.show() 

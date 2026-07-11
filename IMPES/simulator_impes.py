@@ -94,7 +94,7 @@ fw_max_value = np.nanmax(fw_values)
 cont = 1 
 
 
-for k in t_inj:
+for z in t_inj:
     for m in M:
         
         sw_history = []
@@ -104,7 +104,8 @@ for k in t_inj:
         dx = (Lf-Li)/(m-1)
         v = q/a 
         vp = phi*a*dx
-        dt = cfl*(dx*phi)/(v*fw_max_value)
+        # dt = cfl*(dx*phi)/(v*fw_max_value)
+        dt = 0.0800827936386817
         N = int(tf[2]/dt)
     
         prod = np.zeros(N)
@@ -188,14 +189,14 @@ for k in t_inj:
             alpha = (qw*dt)/(vp)
             alpha_inj = (q*dt)/(vp)
 
-            if t[i]>= t_init and t[i] < k:
+            if t[i]>= t_init and t[i] < z:
                 polymer_injection = 500.00
             else:
                 polymer_injection = 0.0
             
                 
 
-            C[-1] = (Sw_old[-1]*C[-1] + alpha[-1]*C[-2])/Sw[-1]
+            C[-1] = ((Sw_old[-1] - alpha[-1]) * C[-1] + alpha[-1] * C[-2]) / Sw[-1]
             C[1:-1] = ((Sw_old[1:-1] - alpha[1:]) * C[1:-1] + alpha[:-1] * C[:-2]) / Sw[1:-1]
             C[0] = ((Sw_old[0] - alpha[0]) * C[0] + alpha_inj * polymer_injection) / Sw[0]
 
@@ -214,6 +215,7 @@ for k in t_inj:
                 
 
             if i+1 in plot_values:
+                
                 sw_history.append(Sw.copy())  
                 p_history.append(p.copy())
                 c_history.append(C.copy())
@@ -258,7 +260,7 @@ for k in t_inj:
             'Sw_4 ' : sw_history[4],
             'p_4 ' : p_history[4],
             
-            'C_0 ' : c_history[0],
+            
             'C_1 ' : c_history[1],
             'C_2 ' : c_history[2],
             'C_3 ' : c_history[3],
@@ -283,4 +285,43 @@ for k in t_inj:
         print("N: ", N)
         print("CFL:", cfl)
         print("Execution Time:", execution_time)
+        print(np.shape(t))
         print("=============================================")
+
+
+
+data3 = {
+            
+            'Sw_1 ' : sw_history[1],
+            'p_1 ' : p_history[1],
+            
+            
+            'Sw_2 ' : sw_history[2],
+            'p_2 ' : p_history[2],
+            
+            
+            'Sw_3 ' : sw_history[3],
+            'p_3 ' : p_history[3],
+            
+
+            'Sw_4 ' : sw_history[4],
+            'p_4 ' : p_history[4],
+            
+
+            'C_1 ' : c_history[1],
+            'C_2 ' : c_history[2],
+            'C_3 ' : c_history[3],
+            'C_4 ' : c_history[4],
+
+
+}
+
+
+
+
+dataframe3 = pd.DataFrame(data3)
+
+path = "/home/pedro/Área de trabalho/Faculdade /BuckleyLeverettSimulator/Diff/output_impes_200_diff.txt"
+
+with open(path ,'w') as archive:
+    archive.write(dataframe3.to_string())
